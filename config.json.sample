@@ -1,0 +1,24 @@
+{
+  "sourceirchost":"",
+  "sourceircport":"",
+  "commandirchost":"",
+
+  "trigger": "^",
+
+  "sourceNick":"",
+  "commandnick":"",
+
+  "realname":"",
+
+  "nickservuser":"",
+  "nickservpass":"",
+
+  "fandomuser": "",
+  "fandompass": ""
+
+  "users": {
+    "TyA": {
+      "en": "{{w:User:TyA}}"
+    }
+  }
+}

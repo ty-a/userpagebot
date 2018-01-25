@@ -1,0 +1,23 @@
+{
+  "name": "userpagebot",
+  "description": "An bot that creates userpages for FANDOM volunteers",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ty-a/userpagebot"
+  },
+  "keywords": [
+    "mediawiki",
+    "irc",
+    "fandom"
+  ],
+  "author": "TyA <tyler@faceyspacies.com>",
+  "license": "MIT",
+  "dependencies": {
+    "irc": "^0.5.2",
+    "nodemw": "git+https://github.com/macbre/nodemw.git"
+  }
+}
