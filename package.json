@@ -1,5 +1,6 @@
 {
   "name": "userpagebot",
+  "version": "1.0.0",
   "description": "An bot that creates userpages for FANDOM volunteers",
   "main": "bot.js",
   "scripts": {
