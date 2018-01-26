@@ -16,7 +16,7 @@ var wikianet = new irc.Client(
     retryCount: 15,
     userName: "tybot",
     realName: config.realname,
-    debug:true,
+    debug:false,
     autoConnect: true,
     stripColors: true,
     port:config.sourceircport
@@ -35,7 +35,7 @@ var freenode = new irc.Client(
     userName: "tybot",
     realName: config.realname,
     password: config.nickservpass,
-    debug: true,
+    debug: false,
     autoConnect: true
   }
 );
@@ -97,14 +97,14 @@ freenode.addListener("message", function(nick, to, text, message) {
       // remove all
     } else {
       //remove
-      freenode.say(message.args[0], message.nick + ": Added template for " + args[0] + " on " + args[1] + " wikis");
+      freenode.say(message.args[0], message.nick + ": Removed template for " + args[0] + " on " + args[1] + " wikis");
       delete config["users"][args[0]][args[1]];
     }
 
     fs.writeFile("./config.json", JSON.stringify(config), (err) => console.error);
     break;
   }
-  console.log(message);
+  //console.log(message);
 });
 
 wikianet.addListener("message", function(nick, to, text, message) {
@@ -116,13 +116,13 @@ wikianet.addListener("message", function(nick, to, text, message) {
     var bot = new mw({
       server: match[1] + ".wikia.com",
       path: "",
-      debug:true,
+      debug:false,
       username: config.fandomuser,
       password: config.fandompass
     });
 
     bot.getArticle("User:" + match[2], function(err, content) {
-      console.log(content);
+      //console.log(content);
       if(typeof content !== "undefined") {
         return;
       }
@@ -150,9 +150,5 @@ wikianet.addListener("message", function(nick, to, text, message) {
         });
       });
     });
-
-
-  } else {
-    return;
   }
 });
