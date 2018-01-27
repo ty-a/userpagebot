@@ -112,6 +112,7 @@ wikianet.addListener("message", function(nick, to, text, message) {
   if(match == null) {
     return;
   }
+  match[2] = match[2].replace(" ", "_");
   if(config.users.hasOwnProperty(match[2])) {
     var bot = new mw({
       server: match[1] + ".wikia.com",
