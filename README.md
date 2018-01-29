@@ -12,3 +12,9 @@ Or if you want to auto-start and what not
 1. Install `pm2` with `npm install pm2 -g`
 2. Start it with `pm2 start bot.js` 
 3. Check out https://github.com/Unitech/pm2#startup-script-generation
+
+## Commands
+* ^add user_name {{w:Template Name}} lang
+** Create userpage for user_name with {{w:Template_Name}} for lang wikis, or blank for default
+* ^remove user_name lang
+** Stop creating userpage for user_name with {{w:Template_Name}} for lang wikis, or blank for all.
