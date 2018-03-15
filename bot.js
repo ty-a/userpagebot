@@ -4,7 +4,7 @@ var fs = require("fs");
 
 var mw = require("nodemw");
 
-const regex = /http:\/\/(.*).wikia.* \* (.*) \*/;
+const regex = /http:\/\/(.*).wikia.com\/[\w\d?=.&]* \* (.*) \* \(/;
 
 var wikianet = new irc.Client(
   config.sourceirchost,
@@ -28,7 +28,7 @@ var freenode = new irc.Client(
   config.commandnick,
   {
     channels: [
-      "#tybot"
+      "#wikia-janitors"
     ],
     sasl: false,
     retryCount: 15,
@@ -73,14 +73,11 @@ freenode.addListener("message", function(nick, to, text, message) {
     } else {
       lang = args[2];
     }
-
-    console.log(args);
     // ensure we have an object to add our config to
     if(typeof config["users"][args[0]] === "undefined") {
       config["users"][args[0]] = {};
     }
     config["users"][args[0]][lang] = args[1];
-    console.log(JSON.stringify(config));
     fs.writeFile("./config.json", JSON.stringify(config), (err) => console.error);
 
     freenode.say(message.args[0], message.nick + ": Added template " + args[1] + " for " + args[0] + " on " + lang + " wikis");
@@ -112,7 +109,7 @@ wikianet.addListener("message", function(nick, to, text, message) {
   if(match == null) {
     return;
   }
-  match[2] = match[2].replace(" ", "_");
+  match[2] = match[2].replace(/ /g, "_");
   if(config.users.hasOwnProperty(match[2])) {
     var bot = new mw({
       server: match[1] + ".wikia.com",
