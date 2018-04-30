@@ -4,7 +4,7 @@ var fs = require("fs");
 
 var mw = require("nodemw");
 
-const regex = /http:\/\/(.*).wikia.com\/[\w\d?=.&:/]* \* (.*) \* /;
+const regex = /https?:\/\/(.*).wikia.com\/[\w\d?=.&:/]* \* (.*) \* /;
 
 var wikianet = new irc.Client(
   config.sourceirchost,
