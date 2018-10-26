@@ -4,7 +4,7 @@ var fs = require("fs");
 
 var mw = require("nodemw");
 
-const regex = /https?:\/\/(.*).wikia.com\/[\w\d?=.&:/]* \* (.*) \* /;
+const regex = /https?:\/\/(.*\/(index\.php|wiki)).* \* (.*) \*/;
 
 var wikianet = new irc.Client(
   config.sourceirchost,
@@ -107,44 +107,63 @@ freenode.addListener("message", function(nick, to, text, message) {
 wikianet.addListener("message", function(nick, to, text, message) {
   var match = regex.exec(text);
   if(match == null) {
+
+    console.log("does not match");
+    console.log(text);
     return;
   }
-  match[2] = match[2].replace(/ /g, "_");
-  if(config.users.hasOwnProperty(match[2])) {
+  match[3] = match[3].replace(/ /g, "_");
+  match[1] = match[1].replace("/wiki", "").replace("/index.php", "");
+  if(config.users.hasOwnProperty(match[3])) {
     var bot = new mw({
-      server: match[1] + ".wikia.com",
+      server: match[1],
       path: "",
       debug:false,
       username: config.fandomuser,
       password: config.fandompass
     });
 
-    bot.getArticle("User:" + match[2], function(err, content) {
+    bot.getArticle("User:" + match[3], function(err, content) {
       //console.log(content);
       if(typeof content !== "undefined") {
         return;
       }
       bot.logIn(function() {
         var lang;
-        if(match[1].indexOf(".") != -1) {
-          // there is a period in the URL, check for languages
-          lang = match[1].split(".")[0];
+        if(match[1].indexOf("fandom.com") == -1) {
+          // we have a wikia.com domain
+          // 	`ru.tvpedia.wikia.com/index.php`
+          var subdomain = match[1].split(".wikia")[0];
+          if(subdomain.indexOf(".") != -1) {
+            lang = subdomain.split(".")[0];
+          } else {
+            lang = "en";
+          }
         } else {
-          lang = "en";
+          // we have a fandom.com domain
+          // subject.fandom.com/langcode
+          if(match[1].indexOf("/") == -1) {
+            // there is no /langCode
+            lang = "en";
+          } else {
+            lang = match[1].split("/")[1].replace("/", "");
+          }
+
         }
 
         var text;
         // try the lang provided, then try English, then abort
-        if(config.users[match[2]].hasOwnProperty(lang)) {
-          text = config.users[match[2]][lang];
-        } else if (config.users[match[2]].hasOwnProperty("en")) {
-          text = config.users[match[2]].en;
+        if(config.users[match[3]].hasOwnProperty(lang)) {
+          text = config.users[match[3]][lang];
+        } else if (config.users[match[3]].hasOwnProperty("en")) {
+          text = config.users[match[3]].en;
         } else {
-          console.error("No english template for " + match[2]);
+          console.error("No english template for " + match[3]);
           return;
         }
-        bot.edit("User:" + match[2], text, "Creating userpage for " + match[2], function(err, res) {
-          console.log("Creating userpage for " + match[2] + " at " + match[1]);
+        console.log("Creating userpage for " + match[3] + " at " + match[1]);
+        bot.edit("User:" + match[3], text, "Creating userpage for " + match[3], function(err, res) {
+          console.log("Creating userpage for " + match[3] + " at " + match[1]);
         });
       });
     });
