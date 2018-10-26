@@ -114,11 +114,35 @@ wikianet.addListener("message", function(nick, to, text, message) {
   }
   match[3] = match[3].replace(/ /g, "_");
   match[1] = match[1].replace("/wiki", "").replace("/index.php", "");
+  var lang;
+  if(match[1].indexOf("fandom.com") == -1) {
+    // we have a wikia.com domain
+    // 	`ru.tvpedia.wikia.com/index.php`
+    var subdomain = match[1].split(".wikia")[0];
+    if(subdomain.indexOf(".") != -1) {
+      lang = subdomain.split(".")[0];
+    } else {
+      lang = "en";
+    }
+  } else {
+    // we have a fandom.com domain
+    // subject.fandom.com/langcode
+    if(match[1].indexOf("/") == -1) {
+      // there is no /langCode
+      lang = "en";
+    } else {
+      lang = match[1].split("/")[1].replace("/", "");
+    }
+
+    match[1] = match[1].split("/")[0];
+
+  }
   if(config.users.hasOwnProperty(match[3])) {
     var bot = new mw({
       server: match[1],
-      path: "",
+      path: (match[1].indexOf("fandom.com") > -1)? ((lang == "en")? "": "/" + lang): "",
       debug:false,
+      protocol:"https",
       username: config.fandomuser,
       password: config.fandompass
     });
@@ -129,28 +153,6 @@ wikianet.addListener("message", function(nick, to, text, message) {
         return;
       }
       bot.logIn(function() {
-        var lang;
-        if(match[1].indexOf("fandom.com") == -1) {
-          // we have a wikia.com domain
-          // 	`ru.tvpedia.wikia.com/index.php`
-          var subdomain = match[1].split(".wikia")[0];
-          if(subdomain.indexOf(".") != -1) {
-            lang = subdomain.split(".")[0];
-          } else {
-            lang = "en";
-          }
-        } else {
-          // we have a fandom.com domain
-          // subject.fandom.com/langcode
-          if(match[1].indexOf("/") == -1) {
-            // there is no /langCode
-            lang = "en";
-          } else {
-            lang = match[1].split("/")[1].replace("/", "");
-          }
-
-        }
-
         var text;
         // try the lang provided, then try English, then abort
         if(config.users[match[3]].hasOwnProperty(lang)) {
@@ -161,7 +163,7 @@ wikianet.addListener("message", function(nick, to, text, message) {
           console.error("No english template for " + match[3]);
           return;
         }
-        console.log("Creating userpage for " + match[3] + " at " + match[1]);
+
         bot.edit("User:" + match[3], text, "Creating userpage for " + match[3], function(err, res) {
           console.log("Creating userpage for " + match[3] + " at " + match[1]);
         });
