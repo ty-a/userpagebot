@@ -114,6 +114,10 @@ wikianet.addListener("message", function(nick, to, text, message) {
   }
   match[3] = match[3].replace(/ /g, "_");
   match[1] = match[1].replace("/wiki", "").replace("/index.php", "");
+
+  if(!config.users.hasOwnProperty(match[3])) {
+    return;
+  }
   var lang;
   if(match[1].indexOf("fandom.com") == -1) {
     // we have a wikia.com domain
@@ -137,44 +141,43 @@ wikianet.addListener("message", function(nick, to, text, message) {
     match[1] = match[1].split("/")[0];
 
   }
-  if(config.users.hasOwnProperty(match[3])) {
 
-    try {
-      var bot = new mw({
-        server: match[1],
-        path: (match[1].indexOf("fandom.com") > -1)? ((lang == "en")? "": "/" + lang): "",
-        debug:false,
-        protocol:"https",
-        username: config.fandomuser,
-        password: config.fandompass
-      });
 
-      bot.getArticle("User:" + match[3], function(err, content) {
-        //console.log(content);
-        if(typeof content !== "undefined") {
+  try {
+    var bot = new mw({
+      server: match[1],
+      path: (match[1].indexOf("fandom.com") > -1)? ((lang == "en")? "": "/" + lang): "",
+      debug:true,
+      protocol:(match[1].indexOf("wikia.com") > -1 && lang != "en")? "http": "https", // use http on language wikia wikis"https",
+      username: config.fandomuser,
+      password: config.fandompass
+    });
+
+    bot.getArticle("User:" + match[3], function(err, content) {
+      //console.log(content);
+      if(typeof content !== "undefined") {
+        return;
+      }
+      bot.logIn(function() {
+        var text;
+        // try the lang provided, then try English, then abort
+        if(config.users[match[3]].hasOwnProperty(lang)) {
+          text = config.users[match[3]][lang];
+        } else if (config.users[match[3]].hasOwnProperty("en")) {
+          text = config.users[match[3]].en;
+        } else {
+          console.error("No english template for " + match[3]);
           return;
         }
-        bot.logIn(function() {
-          var text;
-          // try the lang provided, then try English, then abort
-          if(config.users[match[3]].hasOwnProperty(lang)) {
-            text = config.users[match[3]][lang];
-          } else if (config.users[match[3]].hasOwnProperty("en")) {
-            text = config.users[match[3]].en;
-          } else {
-            console.error("No english template for " + match[3]);
-            return;
-          }
 
-          bot.edit("User:" + match[3], text, "Creating userpage for " + match[3], function(err, res) {
-            console.log("Creating userpage for " + match[3] + " at " + match[1]);
-          });
+        bot.edit("User:" + match[3], text, "Creating userpage for " + match[3], function(err, res) {
+          console.log("Creating userpage for " + match[3] + " at " + match[1]);
         });
       });
-    } catch(error) {
-      console.error(error);
-      console.log("site: " + match[1] + (match[1].indexOf("fandom.com") > -1)? ((lang == "en")? "": "/" + lang): "");
-      return;
-    }
+    });
+  } catch(error) {
+    console.error(error);
+    console.log("site: " + match[1] + (match[1].indexOf("fandom.com") > -1)? ((lang == "en")? "": "/" + lang): "");
+    return;
   }
 });
