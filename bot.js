@@ -11,9 +11,9 @@ var wikianet = new irc.Client(
   config.sourceNick,
   {
     channels:[
-      "#rc"
+      "#discussionsfeed"
     ],
-    retryCount: 15,
+    retryCount: 99,
     userName: "tybot",
     realName: config.realname,
     debug:false,
@@ -28,10 +28,10 @@ var freenode = new irc.Client(
   config.commandnick,
   {
     channels: [
-      "#wikia-janitors"
+      "#tybot"
     ],
     sasl: false,
-    retryCount: 15,
+    retryCount: 99,
     userName: "tybot",
     realName: config.realname,
     password: config.nickservpass,
@@ -105,24 +105,28 @@ freenode.addListener("message", function(nick, to, text, message) {
 });
 
 wikianet.addListener("message", function(nick, to, text, message) {
-  var match = regex.exec(text);
-  if(match == null) {
-
-    console.log("does not match");
-    console.log(text);
+  var event;
+  try {
+    event = JSON.parse(text);
+  } catch(error) {
+    console.log("json parse error");
+    console.error(error);
     return;
   }
-  match[3] = match[3].replace(/ /g, "_");
-  match[1] = match[1].replace("/wiki", "").replace("/index.php", "");
 
-  if(!config.users.hasOwnProperty(match[3])) {
+  event.userName = event.userName.replace(/ /g, "_");
+  if(!config.users.hasOwnProperty(event.userName)) {
     return;
   }
+
+  event.url = event.url.replace("http://", "");
+  event.url = event.url.split("/d/p")[0];
+
   var lang;
-  if(match[1].indexOf("fandom.com") == -1) {
+  if(event.url.indexOf("fandom.com") == -1) {
     // we have a wikia.com domain
     // 	`ru.tvpedia.wikia.com/index.php`
-    var subdomain = match[1].split(".wikia")[0];
+    var subdomain = event.url.split(".wikia")[0];
     if(subdomain.indexOf(".") != -1) {
       lang = subdomain.split(".")[0];
     } else {
@@ -131,29 +135,30 @@ wikianet.addListener("message", function(nick, to, text, message) {
   } else {
     // we have a fandom.com domain
     // subject.fandom.com/langcode
-    if(match[1].indexOf("/") == -1) {
+    if(event.url.indexOf(".com/") == -1) {
       // there is no /langCode
       lang = "en";
     } else {
-      lang = match[1].split("/")[1].replace("/", "");
+      console.log(event.url);
+      lang = event.url.split(".com/")[1].replace(".com/", "");
     }
-
-    match[1] = match[1].split("/")[0];
 
   }
 
-
+  console.log(event.url);
+  console.log((event.url.indexOf("fandom.com") > -1) ? ((lang == "en")? "": "/" + lang): "");
+  console.log((event.url.indexOf("wikia.com") > -1 && lang != "en")? "http": "https");
   try {
     var bot = new mw({
-      server: match[1],
-      path: (match[1].indexOf("fandom.com") > -1)? ((lang == "en")? "": "/" + lang): "",
+      server: event.url,
+      path: (event.url.indexOf("fandom.com") > -1) ? ((lang == "en")? "": "/" + lang): "",
       debug:true,
-      protocol:(match[1].indexOf("wikia.com") > -1 && lang != "en")? "http": "https", // use http on language wikia wikis"https",
+      protocol:(event.url.indexOf("wikia.com") > -1 && lang != "en")? "http": "https", // use http on language wikia wikis
       username: config.fandomuser,
       password: config.fandompass
     });
 
-    bot.getArticle("User:" + match[3], function(err, content) {
+    bot.getArticle("User:" + event.userName, function(err, content) {
       //console.log(content);
       if(typeof content !== "undefined") {
         return;
@@ -161,23 +166,23 @@ wikianet.addListener("message", function(nick, to, text, message) {
       bot.logIn(function() {
         var text;
         // try the lang provided, then try English, then abort
-        if(config.users[match[3]].hasOwnProperty(lang)) {
-          text = config.users[match[3]][lang];
-        } else if (config.users[match[3]].hasOwnProperty("en")) {
-          text = config.users[match[3]].en;
+        if(config.users[event.userName].hasOwnProperty(lang)) {
+          text = config.users[event.userName][lang];
+        } else if (config.users[event.userName].hasOwnProperty("en")) {
+          text = config.users[event.userName].en;
         } else {
-          console.error("No english template for " + match[3]);
+          console.error("No english template for " + event.userName);
           return;
         }
 
-        bot.edit("User:" + match[3], text, "Creating userpage for " + match[3], function(err, res) {
-          console.log("Creating userpage for " + match[3] + " at " + match[1]);
+        bot.edit("User:" + event.userName, text, "Creating userpage for " + event.userName, function(err, res) {
+          console.log("Creating userpage for " + event.userName + " at " + event.url);
         });
       });
     });
   } catch(error) {
     console.error(error);
-    console.log("site: " + match[1] + (match[1].indexOf("fandom.com") > -1)? ((lang == "en")? "": "/" + lang): "");
+    console.log("site: " + event.url);
     return;
   }
 });
