@@ -139,20 +139,17 @@ wikianet.addListener("message", function(nick, to, text, message) {
       // there is no /langCode
       lang = "en";
     } else {
-      console.log(event.url);
       lang = event.url.split(".com/")[1].replace(".com/", "");
     }
 
   }
 
-  console.log(event.url);
-  console.log((event.url.indexOf("fandom.com") > -1) ? ((lang == "en")? "": "/" + lang): "");
-  console.log((event.url.indexOf("wikia.com") > -1 && lang != "en")? "http": "https");
+  event.url = event.url.split("/")[0];
   try {
     var bot = new mw({
       server: event.url,
       path: (event.url.indexOf("fandom.com") > -1) ? ((lang == "en")? "": "/" + lang): "",
-      debug:true,
+      debug:false,
       protocol:(event.url.indexOf("wikia.com") > -1 && lang != "en")? "http": "https", // use http on language wikia wikis
       username: config.fandomuser,
       password: config.fandompass
